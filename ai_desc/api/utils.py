@@ -1,8 +1,12 @@
 import openai
 import deepl
+import os
 
 auth_key = ""
 openai.api_key = ""
+
+#auth_key = os.environ['deepl_key']
+#openai.api_key = os.environ['openAI_key']
 
 def get_description(length, text_request):
     response = openai.Completion.create(model="text-davinci-003", prompt=text_request, temperature=0, \
