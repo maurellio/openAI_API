@@ -6,6 +6,7 @@ class Users(models.Model):
     date_registration = models.DateTimeField(auto_now_add=True)
     if_sub = models.BooleanField(default=False)
     email = models.EmailField(max_length=250)
+    tokens = models.IntegerField(default=0)
 
 class Decriptions(models.Model):
     user = models.ForeignKey(Users, on_delete=models.CASCADE)

@@ -7,6 +7,9 @@ from .utils import get_description, get_translation
 from .models import Decriptions, Users
 
 class TestView(APIView):
+    """
+    Just a test method to see the data from web-hook
+    """
     def post(self, request):
         print('POST')
         print(request.data)
@@ -18,6 +21,9 @@ class TestView(APIView):
         return Response({'email': request.data}, status=status.HTTP_201_CREATED)
 
 class CreateUser(APIView):
+    """
+    Here is a method for creating a user. This method takes 'email'.
+    """
     def post(self, request):
         try:
             email = request.data['email']
@@ -33,17 +39,36 @@ class CreateUser(APIView):
 
 
 class Generate(APIView):
+    """
+    Here is an API method which doing next stuff:
+    1) Get the original response['text'] and the original language['language']
+    2) Translate it to English
+    3) Send request to open AI
+    4) Translate response from openAI to original language
+    """
     def post(self, request):
         try:
+            email = request.data['email']
             desc_req_ru = request.data['text']
+            language = request.data['language']
         except:
-            return Response({'ERROR': '"text" field was not provided'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'ERROR': 'some fields was not provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = Users.objects.get(email=email)
+        except:
+            return Response({'ERROR': 'User is not registered'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             desc_req_eng = get_translation(desc_req_ru, 'EN-US')
             description_eng = get_description(200, desc_req_eng)
-            description_ru = get_translation(description_eng, 'RU')
-            Decriptions.objects.create(user_req=desc_req_ru, description_ru=description_ru)
+            description_ru = get_translation(description_eng, language)
+            description_ru_length = len(description_ru)
+
+            user.tokens = description_ru_length + user.tokens
+            user.save()
+
+            Decriptions.objects.create(user_req=desc_req_ru, description_ru=description_ru, user=user)
         except Exception as e:
             Decriptions.objects.create(user_req=desc_req_ru, error=repr(e))
             return Response({'ERROR': 'SERVER SIDE ERROR'}, status=status.HTTP_400_BAD_REQUEST)
